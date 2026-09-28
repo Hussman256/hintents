@@ -15,18 +15,18 @@ import (
 type ClientOption func(*clientBuilder) error
 
 type clientBuilder struct {
-	network          Network
-	token            string
-	horizonURL       string
-	sorobanURL       string
-	altURLs          []string
-	cacheEnabled     bool
-	methodTelemetry  MethodTelemetry
-	config           *NetworkConfig
-	httpClient       HTTPClient
-	requestTimeout   time.Duration
-	middlewares      []Middleware
-	loggingEnabled   bool
+	network           Network
+	token             string
+	horizonURL        string
+	sorobanURL        string
+	altURLs           []string
+	cacheEnabled      bool
+	methodTelemetry   MethodTelemetry
+	config            *NetworkConfig
+	httpClient        HTTPClient
+	requestTimeout    time.Duration
+	middlewares       []Middleware
+	loggingEnabled    bool
 	failureThreshold  int
 	retryTimeout      int
 	ledgerRetryConfig *RetryConfig
@@ -318,16 +318,16 @@ func (b *clientBuilder) build() (*Client, error) {
 			HorizonURL: b.horizonURL,
 			HTTP:       b.httpClient,
 		},
-		Network:          b.network,
-		SorobanURL:       b.sorobanURL,
-		AltURLs:          b.altURLs,
-		httpClient:       b.httpClient,
-		token:            b.token,
-		Config:           *b.config,
-		CacheEnabled:     b.cacheEnabled,
-		methodTelemetry:  b.methodTelemetry,
-		failures:         make(map[string]int),
-		lastFailure:      make(map[string]time.Time),
+		Network:           b.network,
+		SorobanURL:        b.sorobanURL,
+		AltURLs:           b.altURLs,
+		httpClient:        b.httpClient,
+		token:             b.token,
+		Config:            *b.config,
+		CacheEnabled:      b.cacheEnabled,
+		methodTelemetry:   b.methodTelemetry,
+		failures:          make(map[string]int),
+		lastFailure:       make(map[string]time.Time),
 		FailureThreshold:  b.failureThreshold,
 		RetryTimeout:      b.retryTimeout,
 		middlewares:       b.middlewares,
