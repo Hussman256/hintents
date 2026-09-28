@@ -27,20 +27,23 @@ type clientBuilder struct {
 	requestTimeout   time.Duration
 	middlewares      []Middleware
 	loggingEnabled   bool
-	failureThreshold int
-	retryTimeout     int
+	failureThreshold  int
+	retryTimeout      int
+	ledgerRetryConfig *RetryConfig
 }
 
 const defaultHTTPTimeout = 15 * time.Second
 
 func newBuilder() *clientBuilder {
+	ledgerCfg := DefaultLedgerRetryConfig()
 	return &clientBuilder{
-		network:          Mainnet,
-		cacheEnabled:     true,
-		methodTelemetry:  defaultMethodTelemetry(),
-		requestTimeout:   defaultHTTPTimeout,
-		failureThreshold: 5,
-		retryTimeout:     60,
+		network:           Mainnet,
+		cacheEnabled:      true,
+		methodTelemetry:   defaultMethodTelemetry(),
+		requestTimeout:    defaultHTTPTimeout,
+		failureThreshold:  5,
+		retryTimeout:      60,
+		ledgerRetryConfig: &ledgerCfg,
 	}
 }
 
@@ -188,6 +191,34 @@ func WithCircuitBreakerTimeout(timeout int) ClientOption {
 	}
 }
 
+// WithLedgerRetryConfig sets custom retry configuration for ledger header fetching.
+func WithLedgerRetryConfig(cfg RetryConfig) ClientOption {
+	return func(b *clientBuilder) error {
+		b.ledgerRetryConfig = &cfg
+		return nil
+	}
+}
+
+// WithLedgerBackoff sets initial backoff, max backoff, and max retries for ledger header fetching.
+func WithLedgerBackoff(initial, max time.Duration, retries int) ClientOption {
+	return func(b *clientBuilder) error {
+		if b.ledgerRetryConfig == nil {
+			cfg := DefaultLedgerRetryConfig()
+			b.ledgerRetryConfig = &cfg
+		}
+		if initial > 0 {
+			b.ledgerRetryConfig.InitialBackoff = initial
+		}
+		if max > 0 {
+			b.ledgerRetryConfig.MaxBackoff = max
+		}
+		if retries >= 0 {
+			b.ledgerRetryConfig.MaxRetries = retries
+		}
+		return nil
+	}
+}
+
 func NewClient(opts ...ClientOption) (*Client, error) {
 	builder := newBuilder()
 
@@ -297,9 +328,10 @@ func (b *clientBuilder) build() (*Client, error) {
 		methodTelemetry:  b.methodTelemetry,
 		failures:         make(map[string]int),
 		lastFailure:      make(map[string]time.Time),
-		FailureThreshold: b.failureThreshold,
-		RetryTimeout:     b.retryTimeout,
-		middlewares:      b.middlewares,
-		healthCollector:  NewHealthCollector(),
+		FailureThreshold:  b.failureThreshold,
+		RetryTimeout:      b.retryTimeout,
+		middlewares:       b.middlewares,
+		healthCollector:   NewHealthCollector(),
+		ledgerRetryConfig: *b.ledgerRetryConfig,
 	}, nil
 }
